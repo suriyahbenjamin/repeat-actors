@@ -33,7 +33,7 @@
   .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
 
   /* masthead */
-  .masthead{padding:38px 0 18px;border-bottom:1px solid var(--ink)}
+  .masthead{padding:38px 0 18px;border-bottom:1px solid var(--rule)}
   .kicker{
     font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.2em;
     text-transform:uppercase;color:var(--ink-60);margin:0 0 14px;
@@ -76,7 +76,7 @@
   .lede small{display:block;font-family:"Public Sans",sans-serif;font-size:13px;color:var(--ink-60);margin-top:14px;max-width:52ch;line-height:1.6}
 
   /* controls */
-  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:26px 0 20px;margin-top:26px;border-top:1px solid var(--rule);border-bottom:1px solid var(--ink)}
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:26px 0 20px;margin-top:26px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
   .field{display:flex;flex-direction:column;gap:6px}
   .field label{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-40)}
   select,input[type=search]{
@@ -89,7 +89,7 @@
 
   /* distribution */
   .sec{margin:46px 0 0}
-  .sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:0}
+  .sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:0}
   .sec-head h2{font-family:"Newsreader",Georgia,serif;font-weight:600;font-size:23px;margin:0;letter-spacing:-.01em}
   .sec-head .note{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-40);margin-left:auto;text-align:right}
 
@@ -104,9 +104,9 @@
   .dp{font-size:12.5px;color:var(--ink-60);margin-top:5px}
 
   /* ledger */
-  .axis{display:flex;justify-content:space-between;padding:14px 0 6px;margin-left:242px;border-bottom:1px solid var(--rule)}
+  .axis{display:flex;justify-content:space-between;padding:12px 16px 6px 258px}
   .axis span{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-40)}
-  .ledger{border:1px solid var(--rule);border-top:none;background:var(--card)}
+  .ledger{border:1px solid var(--rule);background:var(--card)}
   .prow{display:grid;grid-template-columns:242px 1fr;border-bottom:1px solid var(--rule-soft)}
   .prow:last-child{border-bottom:none}
   .pname{padding:14px 16px;border-right:1px solid var(--rule-soft)}
@@ -128,11 +128,15 @@
   .more{padding:14px 16px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-60);background:var(--card);border:1px solid var(--rule);border-top:none;text-align:center;cursor:pointer}
   .more:hover{color:var(--ink)}
 
-  .key{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-60)}
+  .key{
+    display:flex;gap:24px;flex-wrap:wrap;align-items:center;
+    background:var(--card);border:1px solid var(--rule);border-top:none;
+    padding:11px 16px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-60);
+  }
   .key i{display:inline-block;width:22px;height:8px;margin-right:7px;vertical-align:middle}
 
   /* caveat */
-  .caveat{margin-top:52px;border:1px solid var(--ink);background:var(--card);padding:24px 26px}
+  .caveat{margin-top:52px;border:1px solid var(--rule);background:var(--card);padding:24px 26px}
   .caveat h3{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 12px;color:var(--rust)}
   .caveat p{margin:0 0 12px;max-width:74ch;font-size:14px;line-height:1.65}
   .caveat p:last-child{margin-bottom:0}
@@ -147,7 +151,7 @@
     transition:transform .28s cubic-bezier(.3,.8,.3,1);overflow-y:auto;
   }
   .drawer.on{transform:translateX(0)}
-  .dtop{padding:24px 26px 18px;border-bottom:1px solid var(--ink);position:relative}
+  .dtop{padding:24px 26px 18px;border-bottom:1px solid var(--rule);position:relative}
   .dtop .cid{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--rust);letter-spacing:.06em}
   .dtop h4{font-family:"Newsreader",serif;font-size:25px;font-weight:600;line-height:1.18;margin:9px 0 0}
   .dclose{position:absolute;top:16px;right:18px;background:none;border:none;font-size:23px;color:var(--ink-60);cursor:pointer;line-height:1}
@@ -169,7 +173,7 @@
     .pname{border-right:none;border-bottom:1px dotted var(--rule);padding-bottom:10px}
     .tracks{padding:12px 16px}
     .grid{inset:12px 16px}
-    .axis{margin-left:0}
+    .axis{padding-left:16px}
     .headgrid{grid-template-columns:1fr;gap:22px}
     .headstats{border-left:none;border-top:2px solid var(--ink);padding-left:0;
       padding-top:16px;display:flex;flex-direction:row;justify-content:flex-start;gap:34px}
@@ -195,9 +199,8 @@
       <span id="m-range">—</span>
       <span id="m-pros">— prosecutors named</span>
       <span id="m-geo">— counties</span>
-      <span id="m-median">— median sentence</span>
-      <span id="m-lag">— median wait to exoneration</span>
-      <span class="tag" id="m-src">Sample data</span>
+      <span id="m-median">—</span>
+      <span id="m-lag">—</span>
     </div>
   </header>
 
@@ -228,7 +231,7 @@
 
   <section class="sec">
     <div class="sec-head">
-      <h2>How often each prosecutor appears</h2>
+      <h2>How often each original prosecutor appears</h2>
       <span class="note">Select a band to filter the timelines below</span>
     </div>
     <div class="dist" id="dist"></div>
@@ -239,15 +242,15 @@
       <h2>Case timelines</h2>
       <span class="note" id="ledgernote"></span>
     </div>
-    <div class="axis" id="axis"></div>
-    <div class="ledger" id="ledger"></div>
-    <div class="more" id="more" hidden></div>
     <div class="key">
       <span><i style="background:repeating-linear-gradient(135deg,var(--rust) 0 2px,#C08074 2px 5px)"></i>Arrest to conviction</span>
-      <span><i style="background:var(--rust)"></i>Serving sentence</span>
+      <span><i style="background:var(--rust)"></i>Time incarcerated</span>
       <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released, awaiting exoneration</span>
       <span><i style="background:var(--teal);width:3px"></i>Exoneration</span>
     </div>
+    <div class="axis" id="axis"></div>
+    <div class="ledger" id="ledger"></div>
+    <div class="more" id="more" hidden></div>
   </section>
 
   <div class="caveat">
@@ -458,12 +461,14 @@ function renderHeader(all){
   setText("#m-geo",counties.size+" counties in "+states.size+" states");
 
   const served=CASES.map(c=>c.years).filter(v=>Number.isFinite(v)&&v>=0);
-  setText("#m-median","median "+median(served)+" yrs served");
+  setText("#m-median","median "+median(served)+" yrs incarcerated");
 
   const lags=CASES.map(c=>(Number.isFinite(c.exo)&&Number.isFinite(c.release))?c.exo-c.release:null)
                   .filter(v=>v!==null&&v>=0);
-  setText("#m-lag","median "+median(lags)+" yrs from release to exoneration");
-  setText("#m-src","Sample data");
+  const waited=lags.filter(v=>v>=1).length;
+  setText("#m-lag", waited
+    ? waited+" cleared only years after release (longest "+Math.max(...lags)+" yrs)"
+    : "all cleared in the year of release");
   setText("#m-range",Y0+"–"+Y1);
   setText("#h-cases",CASES.length);
   setText("#h-years",totYears.toLocaleString());
@@ -481,7 +486,7 @@ function renderHeader(all){
 }
 
 function renderDist(all){
-  const bands=[[1,1,"once"],[2,2,"twice"],[3,3,"3 times"],[4,5,"4–5 times"],[6,99,"6 or more"]];
+  const bands=[[1,1,"once"],[2,2,"twice"],[3,3,"three times"],[4,4,"four times"],[5,99,"five times or more"]];
   const host=$("#dist"); host.textContent="";
   bands.forEach(([lo,hi,lab])=>{
     const ps=all.filter(p=>p.n>=lo&&p.n<=hi);
@@ -522,7 +527,7 @@ function renderLedger(all){
     nm.appendChild(el("div","nm", label(p.name)));
     nm.appendChild(el("div","of", p.office||"—"));
     const st=el("div","st");
-    st.innerHTML = `${p.n} case${p.n===1?"":"s"} &nbsp;·&nbsp; <b>${p.years}</b> yrs &nbsp;·&nbsp; longest ${p.longest}`;
+    st.innerHTML = `${p.n} case${p.n===1?"":"s"} &nbsp;·&nbsp; <b>${p.years} years lost</b> &nbsp;·&nbsp; longest ${p.longest} yrs`;
     nm.appendChild(st);
     row.appendChild(nm);
 
@@ -552,7 +557,7 @@ function renderLedger(all){
         b.style.left=pos(from)+"%";
         b.style.width=Math.max(0.6,pos(c.release)-pos(from))+"%";
         b.title=hasConv
-          ? `${c.id} — ${c.release-c.conviction} yrs served after conviction (${c.conviction}–${c.release})`
+          ? `${c.id} — ${c.release-c.conviction} yrs incarcerated after conviction (${c.conviction}–${c.release})`
           : `${c.id} — ${c.years} yrs (${c.arrest}–${c.release}), conviction year not recorded`;
         b.addEventListener("click",()=>openCase(c));
         t.appendChild(b);
