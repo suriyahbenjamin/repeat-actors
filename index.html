@@ -276,7 +276,7 @@
 /* ==================================================================
    NAME DISPLAY SWITCH
    false = prosecutors shown as "Prosecutor A", "Prosecutor B" ...  (safe to publish)
-   true  = real names shown, with a warning banner              (INTERNAL ONLY)
+   true  = real names shown                                     (INTERNAL ONLY)
    Never upload this file to GitHub with SHOW_REAL_NAMES set to true.
 ================================================================== */
 const SHOW_REAL_NAMES = true;
@@ -600,13 +600,14 @@ function openCase(c){
         ? c.team.map(label).join(", ")
         : label(c.prosecutor))],
     ["Jurisdiction", (c.county||"—")+(c.state?", "+c.state:"")],
-    ["Charge", c.crime||"—"],
+    ["Crime type", c.type||"—"],
     ["Arrested", c.arrest||"—"],
+    ["Convicted", c.conviction||"—"],
     ["Released", c.release||"—"],
+    ["Years incarcerated", Number.isFinite(c.years)?c.years+" yrs":"—"],
     ["Exonerated", c.exo||"—"],
     ["Release to exoneration", (Number.isFinite(c.exo)&&Number.isFinite(c.release))?(c.exo-c.release)+" yrs":"—"],
-    ["Race", c.race||"—"],
-    ["Gender", c.gender||"—"]
+    ["Race", c.race||"—"]
   ];
   rows.forEach(([k,v])=>{const d=el("div");d.appendChild(el("dt",null,k));d.appendChild(el("dd",null,String(v)));dl.appendChild(d)});
   $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden","false");
@@ -624,19 +625,7 @@ let tq;$("#q").addEventListener("input",e=>{clearTimeout(tq);tq=setTimeout(()=>{
 $("#dclose").addEventListener("click",closeCase);
 $("#scrim").addEventListener("click",closeCase);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCase()});
-function banner(){
-  if(!SHOW_REAL_NAMES || document.getElementById("realwarn")) return;
-  const b=document.createElement("div");
-  b.id="realwarn";
-  b.textContent="INTERNAL DATA, NOT FOR PUBLICATION";
-  b.style.cssText="position:sticky;top:0;z-index:99;background:#8E3B2F;color:#F4F3EF;"+
-    "font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;"+
-    "text-transform:uppercase;text-align:center;padding:9px 12px";
-  document.body.insertBefore(b, document.body.firstChild);
-}
-
 function render(skipTop){
-  banner();
   setDomain();
   const all=group();
   ANON=anonMap(all.slice().sort((a,b)=>b.years-a.years));
