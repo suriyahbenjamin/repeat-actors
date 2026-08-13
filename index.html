@@ -212,7 +212,7 @@
         <div class="st"><div class="sv" id="h-years">—</div><div class="sl">Years lost</div></div>
       </div>
     </div>
-    <p class="standfirst">Across the IP Victories database, a small number of prosecutors appear in a disproportionate share of convictions later overturned and in the longest sentences served before release.</p>
+    <p class="standfirst">Across the case file, a small number of prosecutors appear in a disproportionate share of convictions later overturned — and in the longest sentences served before release.</p>
     <div class="meta">
       <span id="m-range">—</span>
       <span id="m-pros">— prosecutors named</span>
@@ -263,7 +263,7 @@
     <div class="key">
       <span><i style="background:repeating-linear-gradient(135deg,var(--rust) 0 2px,#C08074 2px 5px)"></i>Arrest to conviction</span>
       <span><i style="background:var(--rust)"></i>Time incarcerated</span>
-      <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released, awaiting exoneration</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released and/or awaiting exoneration</span>
       <span><i style="background:var(--teal);width:3px"></i>Exoneration</span>
       <span><i style="background:var(--ink)"></i>Died in custody; bar ends at death</span>
     </div>
@@ -274,7 +274,7 @@
 
   <div class="caveat">
     <h3>About this data</h3>
-    <p>The cases here come from the victories database of the <b>Innocence Project's Data Science and &amp; Research Department</b>, where I worked as an intern. My assignment was an audit of that database: checking what had already been entered, tracking down what was missing, and getting every case into a consistent format. Prosecutor names turned out to be the largest gap. They had been recorded unevenly across the file, or not at all, so most of that column was built during the audit.</p>
+    <p>The cases here come from the victories database of the <b>Innocence Project's Data Science and &amp; Research Department</b>, where I worked as an intern. My assignment was an audit of that database: checking what had already been entered, tracking down what was missing, and getting every case into a consistent format.</p>
     <p><b>A note on totals.</b> Some cases were tried by more than one prosecutor. Each named prosecutor is credited with the full duration of the case, so the person-year figures for individual prosecutors add up to more than the total for the file as a whole.</p>
     <p>Each case was rebuilt from primary documents. Sources included original trial transcripts, charging documents and indictments, police and investigative reports, docket sheets, appellate briefs and opinions, post-conviction and habeas filings, court orders, and orders of exoneration or dismissal, supplemented by contemporaneous news coverage and public exoneration registries where the record was incomplete. Prosecutors were identified from the appearance of counsel in trial transcripts and from signature blocks on filings, rather than from secondary summaries.</p>
   </div>
@@ -330,7 +330,6 @@ function applyOverrides(list){
       c.outcome_year = o.outcome_year;
       // the bar now ends at death, not at a placeholder release date
       c.release = o.outcome_year;
-      c.exo = null;
       c.years = Number.isFinite(c.arrest) ? o.outcome_year - c.arrest : null;
     }
   });
@@ -355,7 +354,7 @@ const CASES=[
   {id:"15", prosecutor:"Kenneth Anderson", team:["Kenneth Anderson"], county:"Williamson", state:"TX", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
   {id:"16", prosecutor:"Tim Harris", team:["Tim Harris"], county:"Tulsa", state:"OK", type:"Homicide", arrest:1984, conviction:1995, release:2014, exo:2014, race:"White", years:30},
   {id:"17", prosecutor:"Robert T. Johnson", team:["Robert T. Johnson","Christine Scaccia"], county:"Bronx", state:"NY", type:"Other", arrest:1996, conviction:1999, release:2022, exo:2023, race:"Black & Latinx", years:26},
-  {id:"19", prosecutor:"Mary O'Donohue", team:["Mary O'Donohue"], county:"New York", state:"NY", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
+  {id:"19", prosecutor:"Mary O'Donohue", team:["Mary O'Donohue"], county:"New York", state:"TX", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
   {id:"20", prosecutor:"John Bourcier", team:["John Bourcier"], county:"Providence", state:"RI", type:"Homicide", arrest:1992, conviction:1992, release:2015, exo:null, race:"", years:23},
   {id:"22", prosecutor:"Joe Rehyansky", team:["Joe Rehyansky","Rebble Johnson"], county:"Bradley", state:"TN", type:"Sex crime", arrest:1993, conviction:1994, release:2024, exo:2025, race:"White", years:31},
   {id:"23", prosecutor:"Richard E. Jackson", team:["Richard E. Jackson"], county:"Dallas", state:"TX", type:"Homicide", arrest:1999, conviction:2000, release:2014, exo:2019, race:"Black", years:15},
@@ -430,9 +429,7 @@ const CASES=[
   {id:"92", prosecutor:"Elizabeth Walker", team:["Elizabeth Walker","John D. O'Hair"], county:"Wayne", state:"MI", type:"Sex crime", arrest:1990, conviction:1990, release:2020, exo:2020, race:"Black", years:30},
   {id:"93", prosecutor:"Charlene Iboshi", team:["Charlene Iboshi","Lincoln Ashida"], county:"Hawaii", state:"HI", type:"Both", arrest:1999, conviction:2000, release:2023, exo:2023, race:"Native Hawaiian or Pacific Islander", years:24},
   {id:"94", prosecutor:"Timothy Van Hise", team:["Timothy Van Hise","Maelaine Campbell"], county:"Somerset", state:"NJ", type:"Homicide", arrest:1994, conviction:1995, release:2013, exo:2017, race:"Black", years:19},
-  {id:"95", prosecutor:"Henry Wade", team:["Henry Wade","James Fry","Douglas Fletcher"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2012, exo:2014, race:"Black", years:31},
-  {id:"96", prosecutor:"Caren M. Morgan", team:["Caren M. Morgan","Cornelius E. Regan","John Molaison"], county:"Jefferson Parish", state:"LA", type:"Both", arrest:1996, conviction:1997, release:2012, exo:2012, race:"White", years:16},
-  {id:"97", prosecutor:"Francis Bloom", team:["Francis Bloom"], county:"Hampden", state:"MA", type:"Sex crime", arrest:1985, conviction:1987, release:2016, exo:2017, race:"White", years:31},
+  {id:"95", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2012, exo:2014, race:"Black", years:31},
 ];
 applyOverrides(CASES);
 const S={sort:"years",min:2,q:"",band:null,sel:null,limit:12};
@@ -464,7 +461,8 @@ let ANON={};
 const label = n => SHOW_REAL_NAMES ? n : (ANON[n] || "—");
 
 /* "Both" is how the case file records it; spell it out for readers */
-const CRIME_LABEL = {"Both":"Sex crime & homicide"};
+const CRIME_LABEL = {"Both":"Sex crime & homicide",
+                     "Other":"Other (non-homicide or sex crime related)"};
 const crimeLabel = t => CRIME_LABEL[t] || t;
 function anonMap(list){
   const m={};
@@ -631,7 +629,9 @@ function renderLedger(all){
         const l=el("div","limbo");
         l.style.left=pos(c.release)+"%";
         l.style.width=Math.max(0.4,pos(c.exo)-pos(c.release))+"%";
-        l.title=`${c.exo-c.release} yrs between release and exoneration`;
+        l.title=c.outcome
+          ? `${c.exo-c.release} yrs between ${c.outcome.toLowerCase()} and exoneration — cleared posthumously`
+          : `${c.exo-c.release} yrs between release and exoneration`;
         l.addEventListener("click",()=>openCase(c));
         t.appendChild(l);
       }
@@ -639,7 +639,8 @@ function renderLedger(all){
         const m=el("div","endmark"); m.style.left=pos(c.release)+"%";
         m.title=`${c.outcome} ${c.release}`;
         t.appendChild(m);
-      } else if(Number.isFinite(c.exo)){
+      }
+      if(Number.isFinite(c.exo)){
         const x=el("div","exo"); x.style.left=pos(c.exo)+"%"; t.appendChild(x);
       }
       tr.appendChild(t);
@@ -665,7 +666,7 @@ function openCase(c){
 
   // context chips
   const chips=$("#d-chips"); chips.textContent="";
-  [crimeLabel(c.type), [c.county,c.state].filter(Boolean).join(", "), c.race]
+  [crimeLabel(c.type), [c.county,c.state].filter(Boolean).join(", "), c.race?("Race: "+c.race):""]
     .filter(Boolean).forEach(t=>chips.appendChild(el("span","dchip",t)));
 
   // events, in order, skipping anything the record doesn't have
@@ -688,11 +689,13 @@ function openCase(c){
   else if(Number.isFinite(c.release))
     ev.push(["Released", c.release,
       Number.isFinite(c.years)? c.years+" years incarcerated" : "", "free"]);
-  if(!c.outcome && Number.isFinite(c.exo)){
+  if(Number.isFinite(c.exo)){
     const lag=Number.isFinite(c.release)?c.exo-c.release:null;
     ev.push(["Exonerated", c.exo,
-      lag===null ? "" : (lag===0 ? "cleared in year of release"
-        : lag+" yr"+(lag===1?"":"s")+" after release"), "end"]);
+      lag===null ? ""
+        : c.outcome ? lag+" yr"+(lag===1?"":"s")+" after "+c.outcome.toLowerCase()+" · cleared posthumously"
+        : lag===0 ? "cleared in year of release"
+        : lag+" yr"+(lag===1?"":"s")+" after release", "end"]);
   }
 
   const sp=$("#d-spine"); sp.textContent="";
@@ -713,7 +716,7 @@ function openCase(c){
 
   setText("#d-years", Number.isFinite(c.years)?c.years:"—");
   const lag=(Number.isFinite(c.exo)&&Number.isFinite(c.release))?c.exo-c.release:null;
-  setText("#d-lag", c.outcome ? "—" : (lag===null?"—":lag));
+  setText("#d-lag", lag===null?"—":lag);
 
   $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden","false");
   $("#scrim").classList.add("on"); $("#dclose").focus();
