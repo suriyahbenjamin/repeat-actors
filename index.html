@@ -121,6 +121,8 @@
   .trk:last-child{margin-bottom:0}
   .bar{position:absolute;top:2px;height:11px;background:var(--rust);cursor:pointer;transition:filter .15s}
   .bar.pre{background:repeating-linear-gradient(135deg,var(--rust) 0 2px,#C08074 2px 5px)}
+  .bar.term{background:var(--ink)}
+  .endmark{position:absolute;top:-1px;width:2px;height:17px;background:var(--ink)}
   .bar:hover{filter:brightness(1.35)}
   .bar.sel{outline:1.5px solid var(--ink);outline-offset:1px}
   .limbo{position:absolute;top:5px;height:5px;background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px);cursor:pointer}
@@ -169,6 +171,8 @@
   .ev.pre .rail:before{background:repeating-linear-gradient(180deg,var(--rust) 0 3px,#C08074 3px 6px)}
   .ev.free .rail:before{background:repeating-linear-gradient(180deg,var(--amber) 0 3px,transparent 3px 6px)}
   .ev.end .dot{background:var(--teal)}
+  .ev.died .dot{background:var(--ink);border-radius:1px;width:12px;height:4px;margin-top:9px}
+  .ev.died .lbl{color:var(--ink)}
   .ev .lbl{font-size:14.5px;font-weight:600;line-height:1.3}
   .ev .sub{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-40);margin-top:3px;line-height:1.5}
 
@@ -261,6 +265,7 @@
       <span><i style="background:var(--rust)"></i>Time incarcerated</span>
       <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released, awaiting exoneration</span>
       <span><i style="background:var(--teal);width:3px"></i>Exoneration</span>
+      <span><i style="background:var(--ink)"></i>Died in custody &mdash; bar ends at death</span>
     </div>
     <div class="axis" id="axis"></div>
     <div class="ledger" id="ledger"></div>
@@ -301,6 +306,35 @@
    Never upload this file to GitHub with SHOW_REAL_NAMES set to true.
 ================================================================== */
 const SHOW_REAL_NAMES = true;
+
+/* ==================================================================
+   CASE OVERRIDES
+   For the handful of cases the spreadsheet cannot express. Keyed on
+   case id. Lives outside the CASES block, so re-pasting fresh data
+   from the converter will not wipe it.
+
+   outcome      "Executed" | "Died in custody" | "Died after release"
+   outcome_year the year the person died
+================================================================== */
+const CASE_OVERRIDES = {
+  "63": { outcome:"Executed", outcome_year:1956 }
+};
+
+// fold the overrides into the data as soon as it loads
+function applyOverrides(list){
+  list.forEach(c=>{
+    const o=CASE_OVERRIDES[String(c.id)];
+    if(!o) return;
+    c.outcome = o.outcome;
+    if(Number.isFinite(o.outcome_year)){
+      c.outcome_year = o.outcome_year;
+      // the bar now ends at death, not at a placeholder release date
+      c.release = o.outcome_year;
+      c.exo = null;
+      c.years = Number.isFinite(c.arrest) ? o.outcome_year - c.arrest : null;
+    }
+  });
+  return list;
 /* Case data — generated from spreadsheet export */
 const CASES=[
   {id:"1", prosecutor:"Mario Merola", team:["Mario Merola","Andrea Freund"], county:"Bronx", state:"NY", type:"Sex crime", arrest:1984, conviction:1984, release:2006, exo:2006, race:"Black", years:22},
@@ -397,6 +431,7 @@ const CASES=[
   {id:"94", prosecutor:"Timothy Van Hise", team:["Timothy Van Hise","Maelaine Campbell"], county:"Somerset", state:"NJ", type:"Homicide", arrest:1994, conviction:1995, release:2013, exo:2017, race:"Black", years:19},
   {id:"95", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2012, exo:2014, race:"Black", years:31},
 ];
+applyOverrides(CASES);
 const S={sort:"years",min:2,q:"",band:null,sel:null,limit:12};
 const $=s=>document.querySelector(s);
 const setText=(sel,val)=>{const n=$(sel); if(n)n.textContent=val;};
@@ -424,6 +459,10 @@ const pos=y=>((Math.max(Y0,Math.min(Y1,y))-Y0)/(Y1-Y0))*100;
 
 let ANON={};
 const label = n => SHOW_REAL_NAMES ? n : (ANON[n] || "—");
+
+/* "Both" is how the case file records it; spell it out for readers */
+const CRIME_LABEL = {"Both":"Sex crime & homicide"};
+const crimeLabel = t => CRIME_LABEL[t] || t;
 function anonMap(list){
   const m={};
   list.forEach((p,i)=>{
@@ -548,7 +587,7 @@ function renderLedger(all){
     nm.appendChild(el("div","nm", label(p.name)));
     nm.appendChild(el("div","of", p.office||"—"));
     const st=el("div","st");
-    st.innerHTML = `${p.n} case${p.n===1?"":"s"} &nbsp;·&nbsp; <b>${p.years} years lost</b> &nbsp;·&nbsp; longest ${p.longest} yrs`;
+    st.innerHTML = `${p.n} case${p.n===1?"":"s"} &nbsp;·&nbsp; <b>${p.years} years lost</b> &nbsp;·&nbsp; longest sentence: ${p.longest} yrs`;
     nm.appendChild(st);
     row.appendChild(nm);
 
@@ -574,10 +613,12 @@ function renderLedger(all){
       // segment 2: conviction (or arrest, if unknown) to release
       if(Number.isFinite(c.arrest)&&Number.isFinite(c.release)){
         const from = hasConv ? c.conviction : c.arrest;
-        const b=el("div","bar"+(S.sel===c.id?" sel":""));
+        const b=el("div","bar"+(c.outcome?" term":"")+(S.sel===c.id?" sel":""));
         b.style.left=pos(from)+"%";
         b.style.width=Math.max(0.6,pos(c.release)-pos(from))+"%";
-        b.title=hasConv
+        b.title=c.outcome
+          ? `${c.id} — ${c.outcome.toLowerCase()} ${c.release}, ${c.years} yrs after arrest`
+          : hasConv
           ? `${c.id} — ${c.release-c.conviction} yrs incarcerated after conviction (${c.conviction}–${c.release})`
           : `${c.id} — ${c.years} yrs (${c.arrest}–${c.release}), conviction year not recorded`;
         b.addEventListener("click",()=>openCase(c));
@@ -591,7 +632,11 @@ function renderLedger(all){
         l.addEventListener("click",()=>openCase(c));
         t.appendChild(l);
       }
-      if(Number.isFinite(c.exo)){
+      if(c.outcome && Number.isFinite(c.release)){
+        const m=el("div","endmark"); m.style.left=pos(c.release)+"%";
+        m.title=`${c.outcome} ${c.release}`;
+        t.appendChild(m);
+      } else if(Number.isFinite(c.exo)){
         const x=el("div","exo"); x.style.left=pos(c.exo)+"%"; t.appendChild(x);
       }
       tr.appendChild(t);
@@ -617,7 +662,7 @@ function openCase(c){
 
   // context chips
   const chips=$("#d-chips"); chips.textContent="";
-  [c.type, [c.county,c.state].filter(Boolean).join(", "), c.race]
+  [crimeLabel(c.type), [c.county,c.state].filter(Boolean).join(", "), c.race]
     .filter(Boolean).forEach(t=>chips.appendChild(el("span","dchip",t)));
 
   // events, in order, skipping anything the record doesn't have
@@ -632,10 +677,15 @@ function openCase(c){
         ? (c.conviction===c.arrest ? "same year as arrest"
            : (c.conviction-c.arrest)+" yr"+(c.conviction-c.arrest===1?"":"s")+" after arrest")
         : ""), ""]);
-  if(Number.isFinite(c.release))
+  if(c.outcome && Number.isFinite(c.release)){
+    ev.push([c.outcome, c.release,
+      (Number.isFinite(c.years)? c.years+" years after arrest · never released" : "never released"),
+      "died"]);
+  }
+  else if(Number.isFinite(c.release))
     ev.push(["Released", c.release,
       Number.isFinite(c.years)? c.years+" years incarcerated" : "", "free"]);
-  if(Number.isFinite(c.exo)){
+  if(!c.outcome && Number.isFinite(c.exo)){
     const lag=Number.isFinite(c.release)?c.exo-c.release:null;
     ev.push(["Exonerated", c.exo,
       lag===null ? "" : (lag===0 ? "cleared in year of release"
@@ -660,7 +710,7 @@ function openCase(c){
 
   setText("#d-years", Number.isFinite(c.years)?c.years:"—");
   const lag=(Number.isFinite(c.exo)&&Number.isFinite(c.release))?c.exo-c.release:null;
-  setText("#d-lag", lag===null?"—":lag);
+  setText("#d-lag", c.outcome ? "—" : (lag===null?"—":lag));
 
   $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden","false");
   $("#scrim").classList.add("on"); $("#dclose").focus();
