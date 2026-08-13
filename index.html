@@ -341,7 +341,7 @@ const CASES=[
   {id:"60", prosecutor:"Patrick Robb", team:["Patrick Robb","Michael Insco"], county:"Buchanan", state:"MO", type:"Homicide", arrest:1980, conviction:1985, release:2024, exo:2024, race:"White", years:44},
   {id:"61", prosecutor:"Neil Pask", team:["Neil Pask","Mark Nancarrow","John Vance"], county:"Dallas", state:"TX", type:"Homicide", arrest:1987, conviction:1987, release:2015, exo:2019, race:"White", years:28},
   {id:"62", prosecutor:"Sybil Murphy", team:["Sybil Murphy","Leslie Gomez"], county:"Philadelphia", state:"PA", type:"Sex crime", arrest:2001, conviction:2002, release:2020, exo:2020, race:"Black", years:19},
-  {id:"63", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Both", arrest:1954, conviction:1954, release:null, exo:2026, race:"Black", years:null},
+  {id:"63", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Both", arrest:1954, conviction:1954, release:2026, exo:2026, race:"Black", years:72},
   {id:"64", prosecutor:"Christopher D. Chiles", team:["Christopher D. Chiles","Jara Howard"], county:"Cabell", state:"WV", type:"Both", arrest:2007, conviction:2011, release:2016, exo:2021, race:"White", years:9},
   {id:"65", prosecutor:"Jane Darst", team:["Jane Darst"], county:"St. Louis", state:"MO", type:"Other", arrest:1996, conviction:1997, release:2007, exo:2007, race:"Black", years:11},
   {id:"66", prosecutor:"Henry Wade", team:["Henry Wade","James Fry","Douglas Fletcher"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2008, exo:2008, race:"Black", years:27},
@@ -371,7 +371,6 @@ const CASES=[
   {id:"90", prosecutor:"Elizabeth Beach", team:["Elizabeth Beach"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1989, conviction:1990, release:2015, exo:2023, race:"Black", years:26},
   {id:"91", prosecutor:"Jeffrey Arnold", team:["Jeffrey Arnold","Lou Denney"], county:"Delaware", state:"IN", type:"Sex crime", arrest:1992, conviction:1992, release:2017, exo:2017, race:"White", years:25},
 ];
-
 const S={sort:"years",min:2,q:"",band:null,sel:null,limit:12};
 const $=s=>document.querySelector(s);
 const setText=(sel,val)=>{const n=$(sel); if(n)n.textContent=val;};
