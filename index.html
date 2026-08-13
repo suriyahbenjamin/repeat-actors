@@ -263,9 +263,9 @@
     <div class="key">
       <span><i style="background:repeating-linear-gradient(135deg,var(--rust) 0 2px,#C08074 2px 5px)"></i>Arrest to conviction</span>
       <span><i style="background:var(--rust)"></i>Time incarcerated</span>
-      <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released and/or awaiting exoneration</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--amber) 0 3px,transparent 3px 6px)"></i>Released, awaiting exoneration</span>
       <span><i style="background:var(--teal);width:3px"></i>Exoneration</span>
-      <span><i style="background:var(--ink)"></i>Died in custody; bar ends at death</span>
+      <span><i style="background:var(--ink)"></i>Died in custody &mdash; bar ends at death</span>
     </div>
     <div class="axis" id="axis"></div>
     <div class="ledger" id="ledger"></div>
@@ -536,8 +536,15 @@ function renderHeader(all){
 
   const rep = all.filter(p=>p.n>=2).sort((a,b)=>b.n-a.n);
   const top = rep.slice(0,8);
-  const topCases = top.reduce((a,p)=>a+p.n,0);
-  const topYears = top.reduce((a,p)=>a+p.years,0);
+  // count each case once even when several of the group prosecuted it together
+  const topIds = new Set();
+  top.forEach(p=>p.cases.forEach(c=>topIds.add(c.id)));
+  const topCases = topIds.size;
+  let topYears = 0;
+  topIds.forEach(id=>{
+    const c = CASES.find(x=>x.id===id);
+    if(c && Number.isFinite(c.years) && c.years>0) topYears += c.years;
+  });
   const shareC = Math.round(topCases/CASES.length*100);
   const shareY = totYears?Math.round(topYears/totYears*100):0;
   $("#lede").innerHTML =
@@ -575,7 +582,8 @@ function renderLedger(all){
   const show = list.slice(0,S.limit);
   const host=$("#ledger"); host.textContent="";
   $("#ledgernote").textContent = list.length+" prosecutor"+(list.length===1?"":"s")+" shown · sorted by "+
-    ({years:"years lost",count:"case count",longest:"longest sentence"})[S.sort];
+    ({years:"years lost",count:"case count",longest:"longest sentence"})[S.sort]+
+    " · click a bar for case details";
 
   if(!list.length){
     const e=el("div","more","No prosecutors match these filters.");
