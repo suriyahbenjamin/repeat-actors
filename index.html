@@ -812,7 +812,7 @@ $("#maph3").innerHTML =
   `<b>${stateName(topA[0])}</b> and <b>${stateName(topB[0])}</b>  have the largest concentrations in the case file`;
 
 $("#mapinsight").innerHTML =
-  `Together, they represent <b>${topTotal} of the ${CASES.length} cases reviewed</b>, which is ${topPct}% of the current file.`;    svg.setAttribute("aria-label","Interactive United States map. States are shaded by case count. Select a shaded state to open an enlarged county view and filter the page.");
+  `Together, they represent <b>${topTotal} of the ${CASES.length} cases reviewed</b>, which is <b>${topPct}%</b> of the current file.`;    svg.setAttribute("aria-label","Interactive United States map. States are shaded by case count. Select a shaded state to open an enlarged county view and filter the page.");
     mapnav.hidden=true;
     countySelect.textContent="";
   }
@@ -974,8 +974,8 @@ $("#mapinsight").innerHTML =
   }
 
   let footTxt=viewState
-    ? "<b>County view:</b> the entire state remains shaded by its total case count. Hover over a highlighted county for its name and case count, then click it to filter the page. For small or closely packed counties, use the county menu instead. Select “All states” to return to the national view."
-    : "<b>Interactive map:</b> darker states have more cases. Every county dot is the same small size and marks location only; circle size does not represent case count. Click a shaded state or county dot to filter the page and open a larger state-level county view.";
+    ? "<b>County view:</b> The entire state remains shaded by its total case count. Hover over a highlighted county for its name and case count, then click it to filter the page. Select “All states” to return to the national view."
+    : "<b>Interactive map:</b> Each dot represents the county where an Innocence Project client was wrongfully convicted. Click a shaded state or county dot to filter the page and open a larger state-level county view.";
   foot.innerHTML = footTxt;
 }
 
