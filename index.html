@@ -3,9 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
 <title>Repeat Actors: Original Prosecutors Across Exonerations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -15,6 +19,7 @@
     --ink-60:#5C574E;
     --ink-40:#8A857A;
     --rule:#CBC8C0;
+    --rule-dark:#A39D8F;
     --rule-soft:#DDDAD3;
     --rust:#8E3B2F;
     --rust-deep:#5E2620;
@@ -68,12 +73,55 @@
   .tag{border:1px solid var(--rust);color:var(--rust);padding:4px 8px;letter-spacing:.12em;text-transform:uppercase;font-size:10px}
 
   /* lede stat */
-  .lede{
-    font-family:"Newsreader",Georgia,serif;font-size:clamp(21px,2.6vw,28px);line-height:1.45;
-    margin:38px 0 0;max-width:34ch;
+  .ledewrap{display:grid;grid-template-columns:1.5fr 1fr;gap:30px;align-items:center;margin:8px 0 0}
+  @media(max-width:900px){ .ledewrap{grid-template-columns:1fr} }
+  .mapcard{background:none;border:none}
+  .mapcard svg{display:block;width:100%;height:auto;min-height:420px;overflow:visible}
+  .state-outline{stroke:var(--rule-dark);stroke-width:1.1;vector-effect:non-scaling-stroke;
+    transition:filter .12s,stroke-width .12s}
+  .state-outline.has-cases{cursor:pointer}
+  .state-outline.has-cases:hover{filter:brightness(.93)}
+  .state-outline.on{stroke:var(--ink);stroke-width:2.2}
+  .county-boundary{fill:none;stroke:rgba(25,23,19,.2);stroke-width:.45;vector-effect:non-scaling-stroke;pointer-events:none}
+  .county-dot{fill:var(--card);stroke:var(--rust-deep);stroke-width:1.5;vector-effect:non-scaling-stroke;
+    cursor:pointer;transition:fill .12s,stroke-width .12s}
+  .county-dot:hover{fill:var(--amber);stroke-width:2}
+  .county-detail{fill:rgba(244,243,239,.68);stroke:var(--rust-deep);stroke-width:1.5;
+    vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .12s,stroke-width .12s}
+  .county-detail:hover{fill:var(--amber);stroke-width:2.2}
+  .county-detail.on{fill:var(--ink);stroke:var(--card);stroke-width:2.4}
+  .maptip{pointer-events:none}
+  .maptip rect{fill:var(--ink);rx:3}
+  .maptip text{font-family:"JetBrains Mono",monospace;text-anchor:middle;fill:var(--card)}
+  .maptip .tip-title{font-size:13px;font-weight:700}
+  .maptip .tip-detail{font-size:10.5px;fill:var(--rule-soft)}
+  .maplegend{display:flex;align-items:center;gap:7px;padding:12px 0 4px;
+    flex-wrap:wrap;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--ink-40)}
+  .maplegend i{width:20px;height:11px;display:inline-block}
+  .maplegend .dot-key{width:9px;height:9px;border:1.5px solid var(--rust-deep);border-radius:50%;
+    background:var(--card);margin-left:8px}
+  .maplegend .county-key{background:rgba(244,243,239,.68);border:1.5px solid var(--rust-deep);margin-left:8px}
+  .mapinfo{display:flex;flex-direction:column;gap:16px;align-self:center}
+  .mapkicker{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--rust);margin:0 0 -5px}
+  .mapinfo h3{
+    font-family:"Newsreader",Georgia,serif;font-weight:600;font-size:clamp(26px,3vw,38px);
+    line-height:1.12;margin:0;letter-spacing:-.02em;
   }
-  .lede b{font-weight:600;color:var(--rust);font-variant-numeric:tabular-nums}
-  .lede small{display:block;font-family:"Public Sans",sans-serif;font-size:13px;color:var(--ink-60);margin-top:14px;max-width:52ch;line-height:1.6}
+  .mapinfo h3 b{color:var(--rust);font-variant-numeric:tabular-nums}
+  .mapinsight{font-family:"Newsreader",Georgia,serif;font-size:19px;line-height:1.45;color:var(--ink-60);margin:0}
+  .mapinsight b{color:var(--ink);font-weight:600}
+  .mapnav{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:14px;
+    border:1px solid var(--rule);background:rgba(244,243,239,.55)}
+  .mapnav[hidden]{display:none}
+  .mapback{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--rust);background:transparent;border:1px solid var(--rust);border-radius:2px;padding:9px 10px;cursor:pointer}
+  .mapcounty{display:flex;flex:1;min-width:210px;flex-direction:column;gap:5px}
+  .mapcounty label{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-40)}
+  .mapcounty select{width:100%;min-width:0}
+  .mapfoot{font-family:"Public Sans",sans-serif;font-size:13px;color:var(--ink-60);line-height:1.65;margin:0}
+  .mapfoot b{color:var(--rust);font-weight:600}
 
   /* controls */
   .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:26px 0 20px;margin-top:26px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
@@ -212,7 +260,7 @@
         <div class="st"><div class="sv" id="h-years">—</div><div class="sl">Years lost</div></div>
       </div>
     </div>
-    <p class="standfirst">Across the case file, a small number of prosecutors appear in a disproportionate share of convictions later overturned — and in the longest sentences served before release.</p>
+    <p class="standfirst" id="standfirst"></p>
     <div class="meta">
       <span id="m-range">—</span>
       <span id="m-pros">— prosecutors named</span>
@@ -222,7 +270,25 @@
     </div>
   </header>
 
-  <p class="lede" id="lede"></p>
+  <div class="ledewrap">
+    <div class="mapcard">
+      <svg id="usmap" viewBox="0 0 960 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Interactive United States map. States are shaded by case count. Select a shaded state to open an enlarged county view and filter the page."></svg>
+      <div class="maplegend" id="maplegend"></div>
+    </div>
+    <div class="mapinfo">
+      <p class="mapkicker" id="mapkicker"></p>
+      <h3 id="maph3" aria-live="polite"></h3>
+      <p class="mapinsight" id="mapinsight"></p>
+      <div class="mapnav" id="mapnav" hidden>
+        <button class="mapback" id="mapback" type="button">&larr; All states</button>
+        <div class="mapcounty">
+          <label for="map-county">Filter within this state</label>
+          <select id="map-county" aria-label="Filter cases by county"></select>
+        </div>
+      </div>
+      <p class="mapfoot" id="mapfoot"></p>
+    </div>
+  </div>
 
   <div class="controls">
     <div class="field">
@@ -236,9 +302,9 @@
     <div class="field">
       <label for="min">Minimum appearances</label>
       <select id="min">
+        <option value="1" selected>All prosecutors</option>
         <option value="2">2 or more</option>
         <option value="3">3 or more</option>
-        <option value="1">All prosecutors</option>
       </select>
     </div>
     <div class="field grow">
@@ -275,7 +341,7 @@
   <div class="caveat">
     <h3>About this data</h3>
     <p>The cases here come from the victories database of the <b>Innocence Project's Data Science and &amp; Research Department</b>, where I worked as an intern. My assignment was an audit of that database: checking what had already been entered, tracking down what was missing, and getting every case into a consistent format.</p>
-    <p><b>A note on totals.</b> Some cases were tried by more than one prosecutor. Each named prosecutor is credited with the full duration of the case, so the person-year figures for individual prosecutors add up to more than the total for the file as a whole.</p>
+    <p>Some cases were tried by more than one prosecutor. Each named prosecutor is credited with the full duration of the case, so the person-year figures for individual prosecutors add up to more than the total for the file as a whole.</p>
     <p>Each case was rebuilt from primary documents. Sources included original trial transcripts, charging documents and indictments, police and investigative reports, docket sheets, appellate briefs and opinions, post-conviction and habeas filings, court orders, and orders of exoneration or dismissal, supplemented by contemporaneous news coverage and public exoneration registries where the record was incomplete. Prosecutors were identified from the appearance of counsel in trial transcripts and from signature blocks on filings, rather than from secondary summaries.</p>
   </div>
 
@@ -335,7 +401,7 @@ function applyOverrides(list){
   });
   return list;
 }
-/* Case data — generated from spreadsheet export */
+/* Cases from spreadsheet */
 const CASES=[
   {id:"1", prosecutor:"Mario Merola", team:["Mario Merola","Andrea Freund"], county:"Bronx", state:"NY", type:"Sex crime", arrest:1984, conviction:1984, release:2006, exo:2006, race:"Black", years:22},
   {id:"2", prosecutor:"Joan Alexander", team:["Joan Alexander","John Massameno","Carolyn Longstreth"], county:"Hartford", state:"CT", type:"Both", arrest:1991, conviction:2001, release:2017, exo:2018, race:"Black", years:26},
@@ -354,7 +420,7 @@ const CASES=[
   {id:"15", prosecutor:"Kenneth Anderson", team:["Kenneth Anderson"], county:"Williamson", state:"TX", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
   {id:"16", prosecutor:"Tim Harris", team:["Tim Harris"], county:"Tulsa", state:"OK", type:"Homicide", arrest:1984, conviction:1995, release:2014, exo:2014, race:"White", years:30},
   {id:"17", prosecutor:"Robert T. Johnson", team:["Robert T. Johnson","Christine Scaccia"], county:"Bronx", state:"NY", type:"Other", arrest:1996, conviction:1999, release:2022, exo:2023, race:"Black & Latinx", years:26},
-  {id:"19", prosecutor:"Mary O'Donohue", team:["Mary O'Donohue"], county:"New York", state:"TX", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
+  {id:"19", prosecutor:"Mary O'Donohue", team:["Mary O'Donohue"], county:"New York County", state:"NY", type:"Homicide", arrest:1986, conviction:1987, release:2011, exo:2011, race:"White", years:25},
   {id:"20", prosecutor:"John Bourcier", team:["John Bourcier"], county:"Providence", state:"RI", type:"Homicide", arrest:1992, conviction:1992, release:2015, exo:null, race:"", years:23},
   {id:"22", prosecutor:"Joe Rehyansky", team:["Joe Rehyansky","Rebble Johnson"], county:"Bradley", state:"TN", type:"Sex crime", arrest:1993, conviction:1994, release:2024, exo:2025, race:"White", years:31},
   {id:"23", prosecutor:"Richard E. Jackson", team:["Richard E. Jackson"], county:"Dallas", state:"TX", type:"Homicide", arrest:1999, conviction:2000, release:2014, exo:2019, race:"Black", years:15},
@@ -369,7 +435,7 @@ const CASES=[
   {id:"32", prosecutor:"Christopher Stride", team:["Christopher Stride","Stephen Scheller"], county:"Lake", state:"IL", type:"Sex crime", arrest:1994, conviction:1995, release:2015, exo:2015, race:"Latinx", years:21},
   {id:"33", prosecutor:"Daniel Ford", team:["Daniel Ford"], county:"Berkshire", state:"MA", type:"Other", arrest:1983, conviction:1983, release:1984, exo:2022, race:"White", years:1},
   {id:"34", prosecutor:"Brad Butler", team:["Brad Butler","Kenneth Elser"], county:"Carroll", state:"AR", type:"Homicide", arrest:1995, conviction:1996, release:2019, exo:2019, race:"White", years:24},
-  {id:"35", prosecutor:"Thomas Schiels", team:["Thomas Schiels","Robert M. Morgenthau"], county:"New York", state:"NY", type:"Homicide", arrest:1994, conviction:1995, release:2024, exo:2025, race:"Black", years:30},
+  {id:"35", prosecutor:"Thomas Schiels", team:["Thomas Schiels","Robert M. Morgenthau"], county:"New York County", state:"NY", type:"Homicide", arrest:1994, conviction:1995, release:2024, exo:2025, race:"Black", years:30},
   {id:"36", prosecutor:"Eleanor Clark", team:["Eleanor Clark","Edmond Tucker"], county:"Union", state:"NJ", type:"Both", arrest:1985, conviction:1988, release:2007, exo:2007, race:"Black", years:22},
   {id:"37", prosecutor:"William Fitzpatrick", team:["William Fitzpatrick","Robert Wildridge","Michael Price"], county:"Onondaga", state:"NY", type:"Both", arrest:1990, conviction:1992, release:2021, exo:2023, race:"Black", years:31},
   {id:"38", prosecutor:"James Carter", team:["James Carter","Lora Horan"], county:"Seminole", state:"FL", type:"Homicide", arrest:2004, conviction:2006, release:2018, exo:2018, race:"Latinx", years:14},
@@ -378,7 +444,7 @@ const CASES=[
   {id:"41", prosecutor:"Michael Cummingham", team:["Michael Cummingham"], county:"Monmouth", state:"NJ", type:"Sex crime", arrest:1988, conviction:1992, release:1997, exo:2016, race:"Black", years:9},
   {id:"42", prosecutor:"Forrest Allgood", team:["Forrest Allgood","Thad Buck","Robert Ruby"], county:"Lowndes", state:"MS", type:"Both", arrest:1992, conviction:2000, release:2020, exo:2021, race:"Black", years:28},
   {id:"43", prosecutor:"Cornelius E. Regan", team:["Cornelius E. Regan"], county:"Jefferson", state:"LA", type:"Sex crime", arrest:1981, conviction:1982, release:2011, exo:2011, race:"Black", years:30},
-  {id:"44", prosecutor:"Helen Sturm", team:["Helen Sturm"], county:"New York", state:"NY", type:"Homicide", arrest:1997, conviction:1998, release:2023, exo:2023, race:"Black", years:26},
+  {id:"44", prosecutor:"Helen Sturm", team:["Helen Sturm"], county:"New York County", state:"NY", type:"Homicide", arrest:1997, conviction:1998, release:2023, exo:2023, race:"Black", years:26},
   {id:"45", prosecutor:"James Quinn", team:["James Quinn","John Orlando"], county:"Queens", state:"NY", type:"Homicide", arrest:1994, conviction:1995, release:2020, exo:2020, race:"Black", years:26},
   {id:"46", prosecutor:"Kenny Hulshof", team:["Kenny Hulshof","Van Godsey"], county:"Cole", state:"MO", type:"Homicide", arrest:1993, conviction:1994, release:2009, exo:2009, race:"White", years:16},
   {id:"47", prosecutor:"Williard M. Robinson Jr", team:["Williard M. Robinson Jr"], county:"Newport News", state:"VA", type:"Both", arrest:1983, conviction:1983, release:2016, exo:2016, race:"White", years:33},
@@ -400,10 +466,10 @@ const CASES=[
   {id:"63", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Both", arrest:1954, conviction:1954, release:2026, exo:2026, race:"Black", years:72},
   {id:"64", prosecutor:"Christopher D. Chiles", team:["Christopher D. Chiles","Jara Howard"], county:"Cabell", state:"WV", type:"Both", arrest:2007, conviction:2011, release:2016, exo:2021, race:"White", years:9},
   {id:"65", prosecutor:"Jane Darst", team:["Jane Darst"], county:"St. Louis", state:"MO", type:"Other", arrest:1996, conviction:1997, release:2007, exo:2007, race:"Black", years:11},
-  {id:"66", prosecutor:"Henry Wade", team:["Henry Wade","James Fry","Douglas Fletcher"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2008, exo:2008, race:"Black", years:27},
+  {id:"John Doe", prosecutor:"Henry Wade", team:["Henry Wade","James Fry","Douglas Fletcher"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2008, exo:2008, race:"Black", years:27},
   {id:"67", prosecutor:"Leslie J. Mann", team:["Leslie J. Mann"], county:"Essex", state:"NJ", type:"Homicide", arrest:1997, conviction:1999, release:2013, exo:2013, race:"Black", years:16},
   {id:"68", prosecutor:"Dean Hoag", team:["Dean Hoag","Stephen Moore"], county:"St. Louis", state:"MO", type:"Both", arrest:1982, conviction:1983, release:2012, exo:2013, race:"Black", years:30},
-  {id:"69", prosecutor:"Robert M. Morgenthau", team:["Robert M. Morgenthau","Allison Bishop"], county:"New York", state:"NY", type:"Sex crime", arrest:1991, conviction:1992, release:2017, exo:2018, race:"Black", years:26},
+  {id:"69", prosecutor:"Robert M. Morgenthau", team:["Robert M. Morgenthau","Allison Bishop"], county:"New York County", state:"NY", type:"Sex crime", arrest:1991, conviction:1992, release:2017, exo:2018, race:"Black", years:26},
   {id:"70", prosecutor:"Grover C. Trask", team:["Grover C. Trask","Robert Geo Spitzer","Richard Bently"], county:"Riverside", state:"CA", type:"Sex crime", arrest:1986, conviction:1988, release:2000, exo:2000, race:"Black", years:14},
   {id:"71", prosecutor:"Robert T. Johnson", team:["Robert T. Johnson","Elisa Spatola"], county:"Bronx", state:"NY", type:"Both", arrest:1989, conviction:1991, release:2009, exo:2019, race:"Black", years:20},
   {id:"72", prosecutor:"Cecil A. Partee", team:["Cecil A. Partee","Paul Tsukuno","Michael Kelly"], county:"Cook", state:"IL", type:"Other", arrest:1987, conviction:1989, release:2022, exo:2022, race:"Latinx", years:35},
@@ -432,7 +498,7 @@ const CASES=[
   {id:"95", prosecutor:"Henry Wade", team:["Henry Wade"], county:"Dallas", state:"TX", type:"Sex crime", arrest:1981, conviction:1981, release:2012, exo:2014, race:"Black", years:31},
 ];
 applyOverrides(CASES);
-const S={sort:"years",min:2,q:"",band:null,sel:null,limit:12};
+const S={sort:"years",min:1,q:"",band:null,county:null,state:null,sel:null,limit:12};
 const $=s=>document.querySelector(s);
 const setText=(sel,val)=>{const n=$(sel); if(n)n.textContent=val;};
 const median=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;
@@ -475,7 +541,8 @@ function anonMap(list){
 
 function group(){
   const map={};
-  CASES.forEach(c=>{
+  CASES.filter(c => (S.county===null || countyKey(c)===S.county)
+                   && (S.state===null || c.state===S.state)).forEach(c=>{
     // a case may name more than one prosecutor; each is credited with the full case
     const team=(Array.isArray(c.team)&&c.team.length)?c.team:[c.prosecutor];
     team.filter(Boolean).forEach(nm=>{
@@ -518,7 +585,7 @@ function renderHeader(all){
   setText("#m-pros",all.length+" prosecutors named");
 
   const counties=new Set(), states=new Set();
-  CASES.forEach(c=>{if(c.county)counties.add(c.county+"|"+c.state); if(c.state)states.add(c.state)});
+  CASES.forEach(c=>{if(c.county&&c.state)counties.add(countyKey(c)); if(c.state)states.add(c.state)});
   setText("#m-geo",counties.size+" counties in "+states.size+" states");
 
   const served=CASES.map(c=>c.years).filter(v=>Number.isFinite(v)&&v>=0);
@@ -534,23 +601,51 @@ function renderHeader(all){
   setText("#h-cases",CASES.length);
   setText("#h-years",totYears.toLocaleString());
 
-  const rep = all.filter(p=>p.n>=2).sort((a,b)=>b.n-a.n);
-  const top = rep.slice(0,8);
-  // count each case once even when several of the group prosecuted it together
-  const topIds = new Set();
-  top.forEach(p=>p.cases.forEach(c=>topIds.add(c.id)));
-  const topCases = topIds.size;
-  let topYears = 0;
-  topIds.forEach(id=>{
-    const c = CASES.find(x=>x.id===id);
-    if(c && Number.isFinite(c.years) && c.years>0) topYears += c.years;
+}
+
+function renderStandfirst(){
+  const prosecutorCases=new Map();
+
+  CASES.forEach((c,index)=>{
+    const caseId=String(c.id??index);
+    const caseProsecutors=new Set(
+      ((Array.isArray(c.team)&&c.team.length)?c.team:[c.prosecutor]).filter(Boolean)
+    );
+
+    caseProsecutors.forEach(name=>{
+      if(!prosecutorCases.has(name)) prosecutorCases.set(name,new Set());
+      prosecutorCases.get(name).add(caseId);
+    });
   });
-  const shareC = Math.round(topCases/CASES.length*100);
-  const shareY = totYears?Math.round(topYears/totYears*100):0;
-  $("#lede").innerHTML =
-    `<b>${top.length}</b> prosecutors — out of <b>${all.length}</b> named across the file — account for `+
-    `<b>${shareC}%</b> of cases and <b>${shareY}%</b> of all years served before release.`+
-    `<small>Read this as a map of where to look, not as a measure of who performed worse. See the note below on why rates cannot be calculated from an exoneration-only file.</small>`;
+
+  const repeatProsecutors=new Set(
+    [...prosecutorCases.entries()]
+      .filter(([,caseIds])=>caseIds.size>1)
+      .map(([name])=>name)
+  );
+
+  const casesWithRepeatProsecutor=new Set();
+  CASES.forEach((c,index)=>{
+    const caseProsecutors=((Array.isArray(c.team)&&c.team.length)?c.team:[c.prosecutor]).filter(Boolean);
+    if(caseProsecutors.some(name=>repeatProsecutors.has(name))){
+      casesWithRepeatProsecutor.add(String(c.id??index));
+    }
+  });
+
+  const totalProsecutors=prosecutorCases.size;
+  const totalCases=new Set(CASES.map((c,index)=>String(c.id??index))).size;
+  const repeatCount=repeatProsecutors.size;
+  const prosecutorPercent=totalProsecutors?Math.round(repeatCount/totalProsecutors*100):0;
+  const casePercent=totalCases?Math.round(casesWithRepeatProsecutor.size/totalCases*100):0;
+
+  const firstSentence=repeatCount===1
+    ? "Across the current case file, 1 prosecutor appears in multiple wrongful conviction cases."
+    : `Across the current case file, ${repeatCount} prosecutors appear in multiple wrongful conviction cases.`;
+  const secondSentence=repeatCount===1
+    ? ` This prosecutor represents about ${prosecutorPercent}% of the prosecutors named and is associated with ${casePercent}% of the cases reviewed.`
+    : ` Although they represent about ${prosecutorPercent}% of the prosecutors named, they are associated with ${casePercent}% of the cases reviewed.`;
+
+  setText("#standfirst",firstSentence+secondSentence);
 }
 
 function renderDist(all){
@@ -570,6 +665,318 @@ function renderDist(all){
     d.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
     host.appendChild(d);
   });
+}
+
+/* ==================================================================
+   INTERACTIVE STATE + COUNTY MAP
+   States are shaded by total case count. Represented counties use
+   fixed-size location dots nationally and highlighted county shapes
+   in the enlarged state view. Both levels can filter the page.
+================================================================== */
+const COUNTY_ALIASES = {
+  "East Baton Rouge Parish|LA": "East Baton Rouge|LA",
+  "Jefferson Parish|LA": "Jefferson|LA",
+  "King|NY": "Kings|NY",
+  "New York County|NY": "New York|NY"
+};
+const COUNTY_DISPLAY_NAMES = {
+  "East Baton Rouge|LA": "East Baton Rouge Parish",
+  "Jefferson|LA": "Jefferson Parish",
+  "Kings|NY": "Kings County",
+  "New York|NY": "New York County"
+};
+function countyKey(c){
+  const raw = c.county + "|" + c.state;
+  return COUNTY_ALIASES[raw] || raw;
+}
+function countyDisplayName(key){
+  return COUNTY_DISPLAY_NAMES[key] || key.slice(0,key.lastIndexOf("|"));
+}
+
+let MAP_STATE = null;
+let MAP_VIEW_STATE = null;
+
+function countyCounts(){
+  const m={};
+  CASES.forEach(c=>{
+    if(!c.county || !c.state) return;
+    const k=countyKey(c);
+    m[k]=(m[k]||0)+1;
+  });
+  return m;
+}
+
+function stateCounts(){
+  const m={};
+  CASES.forEach(c=>{ if(c.state) m[c.state]=(m[c.state]||0)+1; });
+  return m;
+}
+
+function stateCountyCounts(){
+  const m={};
+  CASES.forEach(c=>{
+    if(!c.state || !c.county) return;
+    if(!m[c.state]) m[c.state]=new Set();
+    m[c.state].add(countyKey(c));
+  });
+  return m;
+}
+
+async function loadMapGeometry(){
+  if(MAP_STATE) return MAP_STATE;
+  try{
+    const [statesRes, countiesRes] = await Promise.all([
+      fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"),
+      fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json")
+    ]);
+    const statesTopo = await statesRes.json();
+    const countiesTopo = await countiesRes.json();
+    const ABBR = {1:"AL",2:"AK",4:"AZ",5:"AR",6:"CA",8:"CO",9:"CT",10:"DE",12:"FL",13:"GA",15:"HI",16:"ID",17:"IL",18:"IN",19:"IA",20:"KS",21:"KY",22:"LA",23:"ME",24:"MD",25:"MA",26:"MI",27:"MN",28:"MS",29:"MO",30:"MT",31:"NE",32:"NV",33:"NH",34:"NJ",35:"NM",36:"NY",37:"NC",38:"ND",39:"OH",40:"OK",41:"OR",42:"PA",44:"RI",45:"SC",46:"SD",47:"TN",48:"TX",49:"UT",50:"VT",51:"VA",53:"WA",54:"WV",55:"WI",56:"WY"};
+    const states = topojson.feature(statesTopo, statesTopo.objects.states).features.map(f=>{
+      f.properties = {...f.properties, abbr: ABBR[Number(f.id)]};
+      return f;
+    });
+    const counties = topojson.feature(countiesTopo, countiesTopo.objects.counties).features.map(f=>{
+      const stateNum = Number(String(f.id).length===4 ? String(f.id).slice(0,1) : String(f.id).slice(0,2));
+      f.properties = {...f.properties, stateAbbr: ABBR[stateNum]};
+      return f;
+    });
+    MAP_STATE = {states, counties};
+    return MAP_STATE;
+  } catch(err){
+    return null;
+  }
+}
+
+async function renderCountyMap(){
+  const svg = document.getElementById("usmap");
+  if(!svg || typeof d3 === "undefined") return;
+  const geo = await loadMapGeometry();
+  const counts = countyCounts();
+  const stateCaseCounts = stateCounts();
+  const stateCountySets = stateCountyCounts();
+  const foot = $("#mapfoot"), legend=$("#maplegend"), mapnav=$("#mapnav"), countySelect=$("#map-county");
+  const counties=new Set(), statesUsed=new Set();
+  CASES.forEach(c=>{ if(c.county&&c.state){ counties.add(countyKey(c)); statesUsed.add(c.state) } });
+
+  if(!geo){
+    svg.innerHTML = '<text x="480" y="300" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#8A857A">Map data unavailable offline</text>';
+    setText("#mapkicker","Geographic concentration");
+    $("#maph3").innerHTML=`Cases span <b>${counties.size}</b> counties across <b>${statesUsed.size}</b> states`;
+    setText("#mapinsight","Reconnect to load the interactive map boundaries.");
+    if(mapnav) mapnav.hidden=true;
+    if(foot) foot.innerHTML = "<b>Interactive map:</b> select a shaded state to open its enlarged county view and filter the page.";
+    return;
+  }
+
+  const wanted = new Set(Object.keys(counts));
+  const matched = geo.counties.filter(f=>wanted.has(f.properties.name+"|"+f.properties.stateAbbr));
+  let viewState = MAP_VIEW_STATE ? geo.states.find(f=>f.properties.abbr===MAP_VIEW_STATE) : null;
+  if(MAP_VIEW_STATE && !viewState) MAP_VIEW_STATE=null;
+  const viewAbbr=viewState?.properties.abbr||null;
+  const viewName=viewState?.properties.name||null;
+  const stateName=abbr=>geo.states.find(f=>f.properties.abbr===abbr)?.properties.name||abbr;
+  const rankedStates=Object.entries(stateCaseCounts).sort((a,b)=>b[1]-a[1]||stateName(a[0]).localeCompare(stateName(b[0])));
+  const [topA,topB]=rankedStates;
+  const topTotal=(topA?.[1]||0)+(topB?.[1]||0);
+  const topPct=Math.round(topTotal/CASES.length*100);
+
+  if(viewState){
+    const stateCountyN=stateCountySets[viewAbbr]?.size||0;
+    const stateCaseN=stateCaseCounts[viewAbbr]||0;
+    setText("#mapkicker","State detail");
+    setText("#maph3",viewName);
+    $("#mapinsight").innerHTML = `<b>${stateCaseN}</b> cases across <b>${stateCountyN}</b> count${stateCountyN===1?"y":"ies"} in the case file.`;
+    svg.setAttribute("aria-label",`Interactive county map of ${viewName}. Represented counties are highlighted. Select a county shape or use the county menu to filter the page.`);
+    mapnav.hidden=false;
+    countySelect.textContent="";
+    const allOpt=document.createElement("option");
+    allOpt.value="";
+    allOpt.textContent=`All ${viewName} counties in the case file`;
+    countySelect.appendChild(allOpt);
+    Object.entries(counts)
+      .filter(([key])=>key.endsWith("|"+viewAbbr))
+      .map(([key,n])=>({key,n,name:countyDisplayName(key)}))
+      .sort((a,b)=>a.name.localeCompare(b.name))
+      .forEach(({key,n,name})=>{
+        const opt=document.createElement("option");
+        opt.value=key;
+        opt.textContent=name+" — "+n+" case"+(n===1?"":"s");
+        countySelect.appendChild(opt);
+      });
+    countySelect.value=S.county||"";
+  }else{
+    setText("#mapkicker", "Geographic concentration");
+
+$("#maph3").innerHTML =
+  `<b>${stateName(topA[0])}</b> and <b>${stateName(topB[0])}</b>  have the largest concentrations in the case file`;
+
+$("#mapinsight").innerHTML =
+  `Together, they represent <b>${topTotal} of the ${CASES.length} cases reviewed</b>, which is ${topPct}% of the current file.`;    svg.setAttribute("aria-label","Interactive United States map. States are shaded by case count. Select a shaded state to open an enlarged county view and filter the page.");
+    mapnav.hidden=true;
+    countySelect.textContent="";
+  }
+
+  const maxState = Math.max(1, ...Object.values(stateCaseCounts));
+  const shade = n => {
+    const t = n/maxState;
+    const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
+    const c1=[233,231,226], c2=[142,59,47];
+    return `rgb(${lerp(c1[0],c2[0],t)},${lerp(c1[1],c2[1],t)},${lerp(c1[2],c2[2],t)})`;
+  };
+
+  // Use a dedicated state projection in detail mode. This is a true re-fit,
+  // not a CSS scale: the selected state expands to occupy the map canvas.
+  const projection = viewState
+    ? d3.geoMercator().fitExtent([[55,35],[905,565]],viewState)
+    : d3.geoAlbersUsa().fitExtent([[10,10],[950,590]],{type:"FeatureCollection",features:geo.states});
+  const path = d3.geoPath(projection);
+  const ns="http://www.w3.org/2000/svg";
+  svg.innerHTML="";
+
+  // A single tooltip layer stays above state shapes, boundaries, and circles.
+  const gLabel=document.createElementNS(ns,"g");
+  function showLabel(feature, title, detail){
+    gLabel.innerHTML="";
+    let [x,y]=path.centroid(feature);
+    if(!Number.isFinite(x)||!Number.isFinite(y)) return;
+    y-=24;
+    const tip=document.createElementNS(ns,"g");
+    tip.setAttribute("class","maptip");
+    tip.setAttribute("transform",`translate(${x},${y})`);
+    const titleEl=document.createElementNS(ns,"text");
+    titleEl.setAttribute("class","tip-title");
+    titleEl.setAttribute("y","0");
+    titleEl.textContent=title;
+    const detailEl=document.createElementNS(ns,"text");
+    detailEl.setAttribute("class","tip-detail");
+    detailEl.setAttribute("y","17");
+    detailEl.textContent=detail;
+    tip.appendChild(titleEl);
+    tip.appendChild(detailEl);
+    gLabel.appendChild(tip);
+    const box=tip.getBBox();
+    const bg=document.createElementNS(ns,"rect");
+    bg.setAttribute("x",box.x-10); bg.setAttribute("y",box.y-7);
+    bg.setAttribute("width",box.width+20); bg.setAttribute("height",box.height+14);
+    tip.insertBefore(bg,titleEl);
+  }
+  function clearLabel(){ gLabel.innerHTML=""; }
+
+  // State fill remains the primary nationwide encoding: darker means more cases.
+  const gStates=document.createElementNS(ns,"g");
+  (viewState?[viewState]:geo.states).forEach(f=>{
+    if(!f.properties.abbr) return;
+    const abbr=f.properties.abbr;
+    const n=stateCaseCounts[abbr]||0;
+    const countyN=stateCountySets[abbr]?.size||0;
+    const p=document.createElementNS(ns,"path");
+    p.setAttribute("class","state-outline"+(!viewState&&n?" has-cases":"")+(viewState?" on":""));
+    p.setAttribute("d",path(f));
+    p.setAttribute("fill",n?shade(n):"var(--paper)");
+    if(!viewState&&n){ p.setAttribute("tabindex","0"); p.setAttribute("role","button"); }
+    const stateDetail=n
+      ? n+" case"+(n===1?"":"s")+" across "+countyN+" count"+(countyN===1?"y":"ies")+(!viewState?" • click for county view":"")
+      : "No cases in this file";
+    p.setAttribute("aria-label",f.properties.name+", "+abbr+" — "+stateDetail);
+    const go=()=>{ MAP_VIEW_STATE=abbr; S.state=abbr; S.county=null; S.limit=12; render(); };
+    if(!viewState&&n){
+      p.addEventListener("click",go);
+      p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
+    }
+    p.addEventListener("mouseenter",()=>showLabel(f, f.properties.name+" ("+abbr+")", stateDetail));
+    p.addEventListener("focus",()=>showLabel(f, f.properties.name+" ("+abbr+")", stateDetail));
+    p.addEventListener("mouseleave",clearLabel);
+    p.addEventListener("blur",clearLabel);
+    gStates.appendChild(p);
+  });
+  svg.appendChild(gStates);
+
+  // Faint boundaries preserve county geography without competing with the state shading.
+  const gBoundaries=document.createElementNS(ns,"g");
+  const boundaryStates=viewState?new Set([viewAbbr]):statesUsed;
+  geo.counties.filter(f=>boundaryStates.has(f.properties.stateAbbr)).forEach(f=>{
+    const p=document.createElementNS(ns,"path");
+    p.setAttribute("class","county-boundary");
+    p.setAttribute("d",path(f));
+    gBoundaries.appendChild(p);
+  });
+  svg.appendChild(gBoundaries);
+
+  // National overview markers are deliberately identical in size. Case volume
+  // is encoded by state shading, never by circle radius. Activating any dot
+  // opens that state's enlarged county view.
+  if(!viewState){
+    const gDots=document.createElementNS(ns,"g");
+    matched.forEach(f=>{
+      const key=f.properties.name+"|"+f.properties.stateAbbr;
+      const n=counts[key]||0;
+      const [cx,cy]=path.centroid(f);
+      if(!Number.isFinite(cx)||!Number.isFinite(cy)) return;
+      const stateFeature=geo.states.find(s=>s.properties.abbr===f.properties.stateAbbr);
+      const stateName=stateFeature?.properties.name||f.properties.stateAbbr;
+      const p=document.createElementNS(ns,"circle");
+      p.setAttribute("class","county-dot");
+      p.setAttribute("cx",cx); p.setAttribute("cy",cy); p.setAttribute("r","4.5");
+      p.setAttribute("tabindex","0"); p.setAttribute("role","button");
+      const displayCounty=countyDisplayName(key);
+      const detail=n+" case"+(n===1?"":"s")+" • open "+stateName+" county view";
+      p.setAttribute("aria-label",displayCounty+", "+stateName+" — "+detail);
+      const go=()=>{ MAP_VIEW_STATE=f.properties.stateAbbr; S.state=f.properties.stateAbbr; S.county=null; S.limit=12; render(); };
+      p.addEventListener("click",go);
+      p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
+      p.addEventListener("mouseenter",()=>showLabel(f,displayCounty+", "+stateName,detail));
+      p.addEventListener("focus",()=>showLabel(f,displayCounty+", "+stateName,detail));
+      p.addEventListener("mouseleave",clearLabel);
+      p.addEventListener("blur",clearLabel);
+      gDots.appendChild(p);
+    });
+    svg.appendChild(gDots);
+  }
+
+  // County shapes only become interactive after the state is enlarged.
+  if(viewState){
+    const gCounties=document.createElementNS(ns,"g");
+    matched.filter(f=>f.properties.stateAbbr===viewAbbr).forEach(f=>{
+      const key=f.properties.name+"|"+f.properties.stateAbbr;
+      const n=counts[key]||0;
+      const on=S.county===key;
+      const displayCounty=countyDisplayName(key);
+      const p=document.createElementNS(ns,"path");
+      p.setAttribute("class","county-detail"+(on?" on":""));
+      p.setAttribute("d",path(f));
+      p.setAttribute("tabindex","0"); p.setAttribute("role","button");
+      const detail=n+" case"+(n===1?"":"s")+" • click to filter";
+      p.setAttribute("aria-label",displayCounty+", "+viewName+" — "+detail);
+      const go=()=>{ S.county=on?null:key; S.state=viewAbbr; S.limit=12; render(); };
+      p.addEventListener("click",go);
+      p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
+      p.addEventListener("mouseenter",()=>showLabel(f,displayCounty+", "+viewName,detail));
+      p.addEventListener("focus",()=>showLabel(f,displayCounty+", "+viewName,detail));
+      p.addEventListener("mouseleave",clearLabel);
+      p.addEventListener("blur",clearLabel);
+      gCounties.appendChild(p);
+    });
+    svg.appendChild(gCounties);
+  }
+  svg.appendChild(gLabel);
+
+  legend.textContent="";
+  if(viewState){
+    const countyKeyEl=el("i","county-key"); legend.appendChild(countyKeyEl);
+    legend.appendChild(el("span",null,"Highlighted county appears in the case file"));
+  }else{
+    legend.appendChild(el("span",null,"State cases: fewer"));
+    [0.15,0.4,0.65,0.9,1].forEach(t=>{ const i=el("i"); i.style.background=shade(t*maxState); legend.appendChild(i) });
+    legend.appendChild(el("span",null,"more"));
+    const dotKey=el("i","dot-key"); legend.appendChild(dotKey);
+    legend.appendChild(el("span",null,"County location • fixed size"));
+  }
+
+  let footTxt=viewState
+    ? "<b>County view:</b> the entire state remains shaded by its total case count. Hover over a highlighted county for its name and case count, then click it to filter the page. For small or closely packed counties, use the county menu instead. Select “All states” to return to the national view."
+    : "<b>Interactive map:</b> darker states have more cases. Every county dot is the same small size and marks location only; circle size does not represent case count. Click a shaded state or county dot to filter the page and open a larger state-level county view.";
+  foot.innerHTML = footTxt;
 }
 
 function renderAxis(){
@@ -735,6 +1142,19 @@ function closeCase(){S.sel=null;$("#drawer").classList.remove("on");$("#drawer")
 /* ==================================================================
    WIRING
 ================================================================== */
+$("#mapback").addEventListener("click",()=>{
+  MAP_VIEW_STATE=null;
+  S.state=null;
+  S.county=null;
+  S.limit=12;
+  render();
+});
+$("#map-county").addEventListener("change",e=>{
+  S.county=e.target.value||null;
+  S.state=MAP_VIEW_STATE;
+  S.limit=12;
+  render();
+});
 $("#sort").addEventListener("change",e=>{S.sort=e.target.value;S.limit=12;render()});
 $("#min").addEventListener("change",e=>{S.min=+e.target.value;S.band=null;S.limit=12;render()});
 let tq;$("#q").addEventListener("input",e=>{clearTimeout(tq);tq=setTimeout(()=>{S.q=e.target.value;S.limit=12;render()},140)});
@@ -743,9 +1163,10 @@ $("#scrim").addEventListener("click",closeCase);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCase()});
 function render(skipTop){
   setDomain();
+  renderStandfirst();
   const all=group();
   ANON=anonMap(all.slice().sort((a,b)=>b.years-a.years));
-  if(!skipTop){renderHeader(all);renderDist(all)}
+  if(!skipTop){renderHeader(all);renderDist(all);renderCountyMap()}
   renderAxis();
   renderLedger(all);
 }
